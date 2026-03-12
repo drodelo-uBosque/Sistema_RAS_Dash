@@ -291,7 +291,7 @@ elif authentication_status:
                         'value': ultima['pH']
                     }
                 },
-                number={'font': {'color': '#E3F2FD', 'size': 40}}
+                number={'font': {'color': '#E3F2FD', 'size': 24}}
             ))
             gauge_ph.update_layout(
                 height=280, paper_bgcolor='#0A1628',
@@ -325,7 +325,7 @@ elif authentication_status:
                     }
                 },
                 number={'suffix': '°C',
-                        'font': {'color': '#E3F2FD', 'size': 40}}
+                        'font': {'color': '#E3F2FD', 'size': 24}}
             ))
             gauge_temp.update_layout(
                 height=280, paper_bgcolor='#0A1628',
@@ -1098,6 +1098,7 @@ elif authentication_status:
 #Usuario: investigador   Contraseña: ras2024
 
 #Usuario: estudiante     Contraseña: udca2024
+
 
 
 
