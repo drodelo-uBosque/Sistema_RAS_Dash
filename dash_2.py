@@ -279,12 +279,12 @@ elif authentication_status:
                     'bar': {'color': "#1565C0"},
                     'bgcolor': "#0D2137",
                     'steps': [
-                        {'range': [5.0,  6.05], 'color': '#B71C1C'},
-                        {'range': [6.05, 6.5],  'color': '#E65100'},
-                        {'range': [6.5,  8.5],  'color': '#1B5E20'},
-                        {'range': [8.5,  9.0],  'color': '#E65100'},
-                        {'range': [9.0,  10.0], 'color': '#B71C1C'},
-                    ],
+                     {'range': [5.0,  6.05], 'color': '#D32F2F'},
+                     {'range': [6.05, 6.5],  'color': '#FBC02D'},
+                     {'range': [6.5,  8.5],  'color': '#388E3C'},
+                     {'range': [8.5,  9.0],  'color': '#FBC02D'},
+                     {'range': [9.0,  10.0], 'color': '#D32F2F'},
+                     ],
                     'threshold': {
                         'line': {'color': "white", 'width': 3},
                         'thickness': 0.75,
@@ -312,12 +312,12 @@ elif authentication_status:
                     'bar': {'color': "#C62828"},
                     'bgcolor': "#0D2137",
                     'steps': [
-                        {'range': [8,   11],  'color': '#B71C1C'},
-                        {'range': [11,  16],  'color': '#E65100'},
-                        {'range': [16,  20],  'color': '#1B5E20'},
-                        {'range': [20,  27],  'color': '#E65100'},
-                        {'range': [27,  32],  'color': '#B71C1C'},
-                    ],
+                     {'range': [8,   11],  'color': '#D32F2F'},
+                     {'range': [11,  16],  'color': '#FBC02D'},
+                     {'range': [16,  20],  'color': '#388E3C'},
+                     {'range': [20,  27],  'color': '#FBC02D'},
+                     {'range': [27,  32],  'color': '#D32F2F'},
+                     ],
                     'threshold': {
                         'line': {'color': "white", 'width': 3},
                         'thickness': 0.75,
@@ -1098,5 +1098,6 @@ elif authentication_status:
 #Usuario: investigador   Contraseña: ras2024
 
 #Usuario: estudiante     Contraseña: udca2024
+
 
 
