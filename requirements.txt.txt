@@ -1,8 +1,9 @@
 streamlit
 pandas
 numpy
-plotly==5.18.0
+plotly
 scikit-learn
 streamlit-authenticator
 bcrypt
 pillow
+
