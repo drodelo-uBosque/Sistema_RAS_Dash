@@ -654,126 +654,230 @@ elif authentication_status:
     # ══════════════════════════════════════════════════════════
     # PESTAÑA 2: TIEMPO REAL
     # ══════════════════════════════════════════════════════════
-    with tab2:
+   with tab2:
         st.title("🔴 Monitoreo en Tiempo Real")
-        st.markdown("**Lecturas simuladas actualizándose automáticamente**")
+        st.markdown("**Simulación de lecturas en tiempo real**")
         st.markdown("---")
 
-        with st.expander("⚙️ ¿Cómo activar el simulador?"):
-            st.code("python simulador_tiempo_real.py", language="bash")
-            st.markdown("Ejecuta ese comando en una terminal aparte "
-                        "y mantén ambas abiertas.")
+        # ── Inicializar estado de sesión ──────────────────────
+        if 'lecturas_tr' not in st.session_state:
+            st.session_state.lecturas_tr = pd.DataFrame(
+                columns=['Timestamp', 'Tanque', 'pH',
+                         'Temperatura_C', 'Estado'])
+        if 'estado_tanques' not in st.session_state:
+            st.session_state.estado_tanques = {
+                f'Tanque {i}': {
+                    'ph':       np.random.uniform(6.8, 7.3),
+                    'temp':     np.random.uniform(17.0, 19.5),
+                    'modo':     'normal',
+                    'contador': 0
+                }
+                for i in range(1, 11)
+            }
+        if 'simulando' not in st.session_state:
+            st.session_state.simulando = False
 
-        intervalo = st.slider("Intervalo de actualización (segundos):",
-                               5, 30, 10)
+        # ── Umbrales ──────────────────────────────────────────
+        def clasificar_tr(ph, temp):
+            if temp < 11.0 or temp > 27.0: return 2
+            if ph  < 6.05 or ph  > 9.0:   return 2
+            if temp < 16.0 or temp > 20.0: return 1
+            if ph  < 6.5  or ph  > 8.5:   return 1
+            return 0
 
-        try:
-            from streamlit_autorefresh import st_autorefresh
-            st_autorefresh(interval=intervalo * 1000, key="refresh_tr")
-        except:
-            st.info("💡 Para auto-actualización: "
-                    "`pip install streamlit-autorefresh`")
-            if st.button("🔄 Actualizar manualmente"):
-                st.rerun()
-
-        ARCHIVO_TR = 'datos/lecturas_tiempo_real.csv'
-
-        if not os.path.exists(ARCHIVO_TR):
-            st.warning("⚠️ Ejecuta `python simulador_tiempo_real.py` primero.")
-        else:
-            df_tr = pd.read_csv(ARCHIVO_TR)
-            df_tr['Timestamp'] = pd.to_datetime(df_tr['Timestamp'])
-
-            if len(df_tr) == 0:
-                st.warning("⚠️ Archivo vacío.")
+        # ── Función simular lectura ───────────────────────────
+        def simular_lectura_tr(estado):
+            if estado['contador'] <= 0:
+                rand = np.random.random()
+                if rand < 0.02:
+                    estado['modo']     = 'critico'
+                    estado['contador'] = np.random.randint(2, 5)
+                elif rand < 0.08:
+                    estado['modo']     = 'suboptimo'
+                    estado['contador'] = np.random.randint(2, 4)
+                else:
+                    estado['modo']     = 'normal'
             else:
-                df_ultima = (df_tr.sort_values('Timestamp')
-                             .groupby('Tanque').last().reset_index())
+                estado['contador'] -= 1
 
-                total_crit  = (df_ultima['Estado'] == 2).sum()
-                total_subop = (df_ultima['Estado'] == 1).sum()
-                total_opt   = (df_ultima['Estado'] == 0).sum()
-                ultima_hora = df_tr['Timestamp'].max().strftime('%H:%M:%S')
+            if estado['modo'] == 'critico':
+                estado['ph']   += np.random.choice([-0.15, 0.15])
+                estado['temp'] += np.random.choice([-0.8,  0.8])
+            elif estado['modo'] == 'suboptimo':
+                estado['ph']   += np.random.choice([-0.08, 0.08])
+                estado['temp'] += np.random.choice([-0.4,  0.4])
+            else:
+                estado['ph']   += (7.0 - estado['ph'])   * 0.1 + \
+                                   np.random.normal(0, 0.03)
+                estado['temp'] += (18.5 - estado['temp']) * 0.1 + \
+                                   np.random.normal(0, 0.1)
 
-                col1, col2, col3, col4 = st.columns(4)
-                col1.metric("🕐 Última lectura",  ultima_hora)
-                col2.metric("🟢 Óptimos",         int(total_opt))
-                col3.metric("🟡 Subóptimos",      int(total_subop))
-                col4.metric("🔴 Críticos",        int(total_crit),
-                            delta_color="inverse")
+            estado['ph']   = float(np.clip(estado['ph'],    5.0, 10.0))
+            estado['temp'] = float(np.clip(estado['temp'],  8.0, 32.0))
+            return round(estado['ph'], 2), round(estado['temp'], 2)
 
-                st.markdown("---")
-                st.subheader("🐟 Estado actual por tanque")
-                cols_tanques = st.columns(5)
-                etiquetas = {
-                    0: ("🟢", "ÓPTIMO",    "alerta-verde"),
-                    1: ("🟡", "SUBÓPTIMO", "alerta-amarilla"),
-                    2: ("🔴", "CRÍTICO",   "alerta-roja")
+        # ── Controles ─────────────────────────────────────────
+        col_btn1, col_btn2, col_btn3 = st.columns(3)
+        with col_btn1:
+            if st.button("▶️ Iniciar simulación",
+                         use_container_width=True):
+                st.session_state.simulando = True
+        with col_btn2:
+            if st.button("⏹️ Detener simulación",
+                         use_container_width=True):
+                st.session_state.simulando = False
+        with col_btn3:
+            if st.button("🗑️ Limpiar datos",
+                         use_container_width=True):
+                st.session_state.lecturas_tr = pd.DataFrame(
+                    columns=['Timestamp', 'Tanque', 'pH',
+                             'Temperatura_C', 'Estado'])
+                st.session_state.estado_tanques = {
+                    f'Tanque {i}': {
+                        'ph':       np.random.uniform(6.8, 7.3),
+                        'temp':     np.random.uniform(17.0, 19.5),
+                        'modo':     'normal',
+                        'contador': 0
+                    }
+                    for i in range(1, 11)
                 }
 
-                for i, row in df_ultima.iterrows():
-                    col_idx = i % 5
-                    icono, texto, clase = etiquetas[row['Estado']]
-                    with cols_tanques[col_idx]:
-                        st.markdown(
-                            f'<div class="{clase}" '
-                            f'style="margin-bottom:10px">'
-                            f'<b>{row["Tanque"]}</b><br>'
-                            f'{icono} {texto}<br>'
-                            f'pH: {row["pH"]:.2f}<br>'
-                            f'T: {row["Temperatura_C"]:.1f}°C'
-                            f'</div>',
-                            unsafe_allow_html=True
-                        )
+        # ── Generar nueva lectura si está simulando ───────────
+        if st.session_state.simulando:
+            nuevas = []
+            ahora  = datetime.now()
+            for tanque, estado in st.session_state.estado_tanques.items():
+                ph, temp = simular_lectura_tr(estado)
+                nuevas.append({
+                    'Timestamp':     ahora.strftime('%Y-%m-%d %H:%M:%S'),
+                    'Tanque':        tanque,
+                    'pH':            ph,
+                    'Temperatura_C': temp,
+                    'Estado':        clasificar_tr(ph, temp)
+                })
 
-                st.markdown("---")
-                st.subheader("📈 Evolución en tiempo real")
-                tanque_tr = st.selectbox(
-                    "Tanque:", sorted(df_tr['Tanque'].unique()),
-                    key='tr_tanque'
-                )
-                df_tr_fil = df_tr[df_tr['Tanque'] == tanque_tr].tail(50)
+            df_nuevo = pd.DataFrame(nuevas)
+            st.session_state.lecturas_tr = pd.concat(
+                [st.session_state.lecturas_tr, df_nuevo],
+                ignore_index=True
+            ).groupby('Tanque').tail(50).reset_index(drop=True)
 
-                fig_tr = make_subplots(
-                    rows=2, cols=1, shared_xaxes=True,
-                    subplot_titles=('pH', 'Temperatura (°C)'),
-                    vertical_spacing=0.12
-                )
-                colores_e = df_tr_fil['Estado'].map(
-                    {0: '#4CAF50', 1: '#FF9800', 2: '#F44336'})
+            estado_sim = "🟢 Simulando..."
+        else:
+            estado_sim = "⏸️ Detenido"
 
-                fig_tr.add_trace(go.Scatter(
-                    x=df_tr_fil['Timestamp'], y=df_tr_fil['pH'],
-                    mode='lines+markers', name='pH',
-                    line=dict(color='#42A5F5', width=2),
-                    marker=dict(color=colores_e, size=8)
-                ), row=1, col=1)
-                fig_tr.add_trace(go.Scatter(
-                    x=df_tr_fil['Timestamp'],
-                    y=df_tr_fil['Temperatura_C'],
-                    mode='lines+markers', name='Temperatura',
-                    line=dict(color='#EF5350', width=2),
-                    marker=dict(color=colores_e, size=8)
-                ), row=2, col=1)
-                fig_tr.update_layout(
-                    height=450, plot_bgcolor='#0D2137',
-                    paper_bgcolor='#0A1628',
-                    font=dict(color='#E3F2FD')
-                )
-                fig_tr.update_xaxes(gridcolor='#1E3A5F')
-                fig_tr.update_yaxes(gridcolor='#1E3A5F')
-                st.plotly_chart(fig_tr, use_container_width=True)
+        st.markdown(f"**Estado:** {estado_sim}")
+        st.markdown("---")
 
-                st.markdown("---")
-                st.subheader("📋 Últimas lecturas")
-                df_tabla = (df_tr.sort_values('Timestamp', ascending=False)
-                            .head(20).copy())
-                df_tabla['Estado'] = df_tabla['Estado'].map(
-                    {0: '🟢 Óptimo', 1: '🟡 Subóptimo', 2: '🔴 Crítico'})
-                st.dataframe(df_tabla[['Timestamp', 'Tanque', 'pH',
-                                        'Temperatura_C', 'Estado']],
-                             use_container_width=True, hide_index=True)
+        df_tr = st.session_state.lecturas_tr
 
+        if len(df_tr) == 0:
+            st.info("💡 Presiona **▶️ Iniciar simulación** para comenzar.")
+        else:
+            # Última lectura por tanque
+            df_ultima = (df_tr.sort_values('Timestamp')
+                         .groupby('Tanque').last().reset_index())
+
+            total_crit  = (df_ultima['Estado'] == 2).sum()
+            total_subop = (df_ultima['Estado'] == 1).sum()
+            total_opt   = (df_ultima['Estado'] == 0).sum()
+            ultima_hora = df_tr['Timestamp'].max()
+
+            col1, col2, col3, col4 = st.columns(4)
+            col1.metric("🕐 Última lectura",  ultima_hora)
+            col2.metric("🟢 Óptimos",         int(total_opt))
+            col3.metric("🟡 Subóptimos",      int(total_subop))
+            col4.metric("🔴 Críticos",        int(total_crit),
+                        delta_color="inverse")
+
+            st.markdown("---")
+
+            # Estado actual por tanque
+            st.subheader("🐟 Estado actual por tanque")
+            cols_tanques = st.columns(5)
+            etiquetas_tr = {
+                0: ("🟢", "ÓPTIMO",    "alerta-verde"),
+                1: ("🟡", "SUBÓPTIMO", "alerta-amarilla"),
+                2: ("🔴", "CRÍTICO",   "alerta-roja")
+            }
+            for i, row in df_ultima.iterrows():
+                col_idx = i % 5
+                icono, texto, clase = etiquetas_tr[row['Estado']]
+                with cols_tanques[col_idx]:
+                    st.markdown(
+                        f'<div class="{clase}" '
+                        f'style="margin-bottom:10px">'
+                        f'<b>{row["Tanque"]}</b><br>'
+                        f'{icono} {texto}<br>'
+                        f'pH: {row["pH"]:.2f}<br>'
+                        f'T: {row["Temperatura_C"]:.1f}°C'
+                        f'</div>',
+                        unsafe_allow_html=True
+                    )
+
+            st.markdown("---")
+
+            # Gráfico evolución
+            st.subheader("📈 Evolución en tiempo real")
+            tanque_tr = st.selectbox(
+                "Tanque:", sorted(df_tr['Tanque'].unique()),
+                key='tr_tanque'
+            )
+            df_tr_fil = df_tr[df_tr['Tanque'] == tanque_tr].tail(20)
+
+            fig_tr = make_subplots(
+                rows=2, cols=1, shared_xaxes=True,
+                subplot_titles=('pH', 'Temperatura (°C)'),
+                vertical_spacing=0.12
+            )
+            colores_e = df_tr_fil['Estado'].map(
+                {0: '#4CAF50', 1: '#FF9800', 2: '#F44336'})
+
+            fig_tr.add_trace(go.Scatter(
+                x=df_tr_fil['Timestamp'], y=df_tr_fil['pH'],
+                mode='lines+markers', name='pH',
+                line=dict(color='#42A5F5', width=2),
+                marker=dict(color=colores_e, size=8)
+            ), row=1, col=1)
+            fig_tr.add_hrect(y0=6.5, y1=8.5,
+                             fillcolor="#1B5E20", opacity=0.1,
+                             row=1, col=1)
+            fig_tr.add_trace(go.Scatter(
+                x=df_tr_fil['Timestamp'],
+                y=df_tr_fil['Temperatura_C'],
+                mode='lines+markers', name='Temperatura',
+                line=dict(color='#EF5350', width=2),
+                marker=dict(color=colores_e, size=8)
+            ), row=2, col=1)
+            fig_tr.add_hrect(y0=16.0, y1=20.0,
+                             fillcolor="#1B5E20", opacity=0.1,
+                             row=2, col=1)
+            fig_tr.update_layout(
+                height=400, plot_bgcolor='#0D2137',
+                paper_bgcolor='#0A1628',
+                font=dict(color='#E3F2FD')
+            )
+            fig_tr.update_xaxes(gridcolor='#1E3A5F')
+            fig_tr.update_yaxes(gridcolor='#1E3A5F')
+            st.plotly_chart(fig_tr, use_container_width=True)
+
+            # Tabla últimas lecturas
+            st.markdown("---")
+            st.subheader("📋 Últimas lecturas")
+            df_tabla = (df_tr.sort_values('Timestamp', ascending=False)
+                        .head(20).copy())
+            df_tabla['Estado'] = df_tabla['Estado'].map(
+                {0: '🟢 Óptimo', 1: '🟡 Subóptimo', 2: '🔴 Crítico'})
+            st.dataframe(
+                df_tabla[['Timestamp', 'Tanque', 'pH',
+                           'Temperatura_C', 'Estado']],
+                use_container_width=True, hide_index=True)
+
+        # ── Auto-refresh cada 3 segundos si está simulando ────
+        if st.session_state.simulando:
+            import time
+            time.sleep(3)
+            st.rerun()
     # ══════════════════════════════════════════════════════════
     # PESTAÑA 3: CLASIFICACIÓN
     # ══════════════════════════════════════════════════════════
@@ -1098,6 +1202,7 @@ elif authentication_status:
 #Usuario: investigador   Contraseña: ras2024
 
 #Usuario: estudiante     Contraseña: udca2024
+
 
 
 
