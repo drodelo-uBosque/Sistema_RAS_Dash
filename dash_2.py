@@ -271,7 +271,7 @@ elif authentication_status:
             gauge_ph = go.Figure(go.Indicator(
                 mode="gauge+number+delta",
                 value=ultima['pH'],
-                title={'text': "pH Actual", 'font': {'color': '#E3F2FD'}},
+                title={'text': "pH Actual", 'font': {'color': '#E3F2FD', 'size': 20}},
                 delta={'reference': 7.0, 'relative': False},
                 gauge={
                     'axis': {'range': [5, 10],
@@ -304,7 +304,7 @@ elif authentication_status:
                 mode="gauge+number+delta",
                 value=ultima['Temperatura_C'],
                 title={'text': "Temperatura (°C)",
-                       'font': {'color': '#E3F2FD'}},
+                       'font': {'color': '#E3F2FD', 'size': 20}},
                 delta={'reference': 18.0, 'relative': False},
                 gauge={
                     'axis': {'range': [8, 32],
@@ -1098,6 +1098,7 @@ elif authentication_status:
 #Usuario: investigador   Contraseña: ras2024
 
 #Usuario: estudiante     Contraseña: udca2024
+
 
 
 
