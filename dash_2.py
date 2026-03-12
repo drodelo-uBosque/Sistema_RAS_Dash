@@ -174,7 +174,7 @@ elif authentication_status:
 
     @st.cache_data
     def cargar_datos():
-        df = pd.read_csv('datos/dataset_udca.csv')
+        df = pd.read_csv('dataset_udca.csv')
         df['Fecha_Hora'] = pd.to_datetime(df['Fecha_Hora'])
         return df
 
@@ -1098,3 +1098,4 @@ elif authentication_status:
 #Usuario: investigador   Contraseña: ras2024
 
 #Usuario: estudiante     Contraseña: udca2024
+
