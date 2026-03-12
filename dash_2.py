@@ -190,7 +190,7 @@ elif authentication_status:
     # ── SIDEBAR ───────────────────────────────────────────────
     with st.sidebar:
         # Logo universidad
-        logo_path = 'C:/Users/user/Desktop/RAS_tilapia/logo.png'
+        logo_path = 'logo.png'
         if os.path.exists(logo_path):
             st.image(logo_path, use_column_width=True)
         st.markdown("---")
@@ -1098,4 +1098,5 @@ elif authentication_status:
 #Usuario: investigador   Contraseña: ras2024
 
 #Usuario: estudiante     Contraseña: udca2024
+
 
