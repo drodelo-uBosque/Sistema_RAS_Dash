@@ -654,7 +654,7 @@ elif authentication_status:
     # ══════════════════════════════════════════════════════════
     # PESTAÑA 2: TIEMPO REAL
     # ══════════════════════════════════════════════════════════
-   with tab2:
+    with tab2:
         st.title("🔴 Monitoreo en Tiempo Real")
         st.markdown("**Simulación de lecturas en tiempo real**")
         st.markdown("---")
@@ -1202,6 +1202,7 @@ elif authentication_status:
 #Usuario: investigador   Contraseña: ras2024
 
 #Usuario: estudiante     Contraseña: udca2024
+
 
 
 
