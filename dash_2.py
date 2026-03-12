@@ -168,7 +168,7 @@ elif authentication_status:
     def cargar_modelo():
         with open('datos/mejor_modelo_clasificacion.pkl', 'rb') as f:
             modelo = pickle.load(f)
-        with open('daotos/scaler_clasificacion.pkl', 'rb') as f:
+        with open('datos/scaler_clasificacion.pkl', 'rb') as f:
             scaler = pickle.load(f)
         return modelo, scaler
 
@@ -1096,4 +1096,5 @@ elif authentication_status:
 
 #Usuario: admin          Contraseña: admin123
 #Usuario: investigador   Contraseña: ras2024
+
 #Usuario: estudiante     Contraseña: udca2024
